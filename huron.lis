@@ -1,0 +1,104 @@
+     1                                  section .data
+     2 00000000 000000000000E03F            half dq 0.5  ; Constant for dividing by 2
+     3 00000008 48656C6C6F2C204173-         message db "Hello, Assembly!", 0 
+     3 00000011 73656D626C792100   
+     4                                  section .bss
+     5                                      align 64
+     6 00000000 <res 00000340>              backup_storage_area resb 832  ; Reserve space for xsave (832 bytes for AVX-512)
+     7                                      
+     8                                  section .text
+     9                                      global huron
+    10                                      extern printf
+    11                                  huron:
+    12                                      ;=========== Back up all the GPRs whether used in this program or not =========================================================
+    13 00000000 55                          push       rbp                                              ; Save a copy of the stack base pointer
+    14 00000001 4889E5                      mov        rbp, rsp                                         ; We do this in order to be 100% compatible with C and C++.
+    15 00000004 53                          push       rbx                                              ; Back up rbx
+    16 00000005 51                          push       rcx                                              ; Back up rcx
+    17 00000006 52                          push       rdx                                              ; Back up rdx
+    18 00000007 56                          push       rsi                                              ; Back up rsi
+    19 00000008 57                          push       rdi                                              ; Back up rdi
+    20 00000009 4150                        push       r8                                               ; Back up r8
+    21 0000000B 4151                        push       r9                                               ; Back up r9
+    22 0000000D 4152                        push       r10                                              ; Back up r10
+    23 0000000F 4153                        push       r11                                              ; Back up r11
+    24 00000011 4154                        push       r12                                              ; Back up r12
+    25 00000013 4155                        push       r13                                              ; Back up r13
+    26 00000015 4156                        push       r14                                              ; Back up r14
+    27 00000017 4157                        push       r15                                              ; Back up r15
+    28 00000019 9C                          pushf                                                       ; Back up rflags
+    29                                  
+    30                                      ; Backup other registers (XMM, etc.) using xsave
+    31 0000001A B807000000                  mov rax, 7                  ; Request saving all state components
+    32 0000001F BA00000000                  mov rdx, 0                  ; Clear upper bits of rdx
+    33 00000024 0FAE2425[00000000]          xsave [backup_storage_area] ; Save extended state to backup_storage_area
+    34                                  
+    35                                      ; Allocate 32 bytes on the stack for alignment and local variables
+    36 0000002C 4883EC20                    sub rsp, 32
+    37                                  
+    38                                      ; Load the sides into higher XMM registers
+    39 00000030 F2440F10E0                  movsd xmm12, xmm0           ; xmm12 = a
+    40 00000035 F2440F10E9                  movsd xmm13, xmm1           ; xmm13 = b
+    41 0000003A F2440F10F2                  movsd xmm14, xmm2           ; xmm14 = c
+    42                                  
+    43                                      ; Calculate the semi-perimeter: s = (a + b + c) / 2
+    44 0000003F F2450F10FC                  movsd xmm15, xmm12          ; xmm15 = a
+    45 00000044 F2450F58FD                  addsd xmm15, xmm13          ; xmm15 = a + b
+    46 00000049 F2450F58FE                  addsd xmm15, xmm14          ; xmm15 = a + b + c
+    47 0000004E F2440F593C25-               mulsd xmm15, [half]         ; xmm15 = (a + b + c) * 0.5 = s
+    47 00000054 [00000000]         
+    48                                      
+    49                                      ; Compute (s - a)
+    50 00000058 F2410F10C7                  movsd xmm0, xmm15           ; xmm0 = s
+    51 0000005D F2410F5CC4                  subsd xmm0, xmm12           ; xmm0 = s - a
+    52                                  
+    53                                      ; Compute (s - b)
+    54 00000062 F2410F10CF                  movsd xmm1, xmm15           ; xmm1 = s
+    55 00000067 F2410F5CCD                  subsd xmm1, xmm13           ; xmm1 = s - b
+    56                                  
+    57                                      ; Compute (s - c)
+    58 0000006C F2410F10D7                  movsd xmm2, xmm15           ; xmm2 = s
+    59 00000071 F2410F5CD6                  subsd xmm2, xmm14           ; xmm2 = s - c
+    60                                     
+    61                                      ; Compute s * (s - a) * (s - b) * (s - c)
+    62 00000076 F2440F59F8                  mulsd xmm15, xmm0           ; xmm15 = s * (s - a)
+    63 0000007B F2440F59F9                  mulsd xmm15, xmm1           ; xmm15 = s * (s - a) * (s - b)
+    64 00000080 F2440F59FA                  mulsd xmm15, xmm2           ; xmm15 = s * (s - a) * (s - b) * (s - c)
+    65                                  
+    66                                      ; Compute the square root to get the area
+    67 00000085 F2410F10C7                  movsd xmm0, xmm15           ; Copy the result to xmm0
+    68 0000008A F20F51C0                    sqrtsd xmm0, xmm0           ; xmm0 = sqrt(s * (s - a) * (s - b) * (s - c))
+    69 0000008E 66480F7EC0                  movq rax, xmm0              ; Move the result to RAX for returning
+    70                                  
+    71                                      ; Restore the stack
+    72 00000093 4883C420                    add rsp, 32
+    73                                  
+    74                                      ; Restore other registers (XMM, etc.) using xrstor
+    75 00000097 B807000000                  mov rax, 7                  ; Request restoring all state components
+    76 0000009C BA00000000                  mov rdx, 0                  ; Clear upper bits of rdx
+    77 000000A1 0FAE2C25[00000000]          xrstor [backup_storage_area] ; Restore extended state from backup_storage_area
+    78                                  
+    79                                      ;=========== Restore all the GPRs whether used in this program or not =========================================================
+    80 000000A9 9D                          popf                                                        ; Restore rflags
+    81 000000AA 415F                        pop        r15                                              ; Restore r15
+    82 000000AC 415E                        pop        r14                                              ; Restore r14
+    83 000000AE 415D                        pop        r13                                              ; Restore r13
+    84 000000B0 415C                        pop        r12                                              ; Restore r12
+    85 000000B2 415B                        pop        r11                                              ; Restore r11
+    86 000000B4 415A                        pop        r10                                              ; Restore r10
+    87 000000B6 4159                        pop        r9                                               ; Restore r9
+    88 000000B8 4158                        pop        r8                                               ; Restore r8
+    89 000000BA 5F                          pop        rdi                                              ; Restore rdi
+    90 000000BB 5E                          pop        rsi                                              ; Restore rsi
+    91 000000BC 5A                          pop        rdx                                              ; Restore rdx
+    92 000000BD 59                          pop        rcx                                              ; Restore rcx
+    93 000000BE 5B                          pop        rbx                                              ; Restore rbx
+    94 000000BF 5D                          pop        rbp                                              ; Restore rbp
+    95                                  
+    96                                      ; Return area
+    97 000000C0 C3                          ret
+    98                                  
+    99                                  invalid_input:
+   100                                      ; Handle invalid input (e.g., return NaN or a specific error code)
+   101 000000C1 48C7C0FFFFFFFF              mov rax, -1
+   102 000000C8 C3                          ret

@@ -1,0 +1,355 @@
+     1                                  global manager
+     2                                  extern printf
+     3                                  extern scanf
+     4                                  extern fgets
+     5                                  extern stdin
+     6                                  extern atof
+     7                                  extern isfloat
+     8                                  extern istriangle
+     9                                  extern huron
+    10                                  section .data
+    14 00000000 0A546869732070726F-         author_info db 10, "This program is brought to you as a courtesy of", 10 ,                      "Author: Chandresh Chavda", 10 ,                      "CWID: 885158899", 10 ,                      "Email: chav349@csu.fullerton.edu", 10, 0
+    14 00000009 6772616D2069732062-
+    14 00000012 726F7567687420746F-
+    14 0000001B 20796F752061732061-
+    14 00000024 20636F757274657379-
+    14 0000002D 206F660A417574686F-
+    14 00000036 723A204368616E6472-
+    14 0000003F 657368204368617664-
+    14 00000048 610A435749443A2038-
+    14 00000051 38353135383839390A-
+    14 0000005A 456D61696C3A206368-
+    14 00000063 617633343940637375-
+    14 0000006C 2E66756C6C6572746F-
+    14 00000075 6E2E6564750A00     
+    15 0000007C 0A57656C636F6D6520-         welcome_msg db 10, "Welcome to Huron’s Triangles. We take care of all your triangle needs.", 10, 0
+    15 00000085 746F204875726F6EE2-
+    15 0000008E 80997320547269616E-
+    15 00000097 676C65732E20576520-
+    15 000000A0 74616B652063617265-
+    15 000000A9 206F6620616C6C2079-
+    15 000000B2 6F757220747269616E-
+    15 000000BB 676C65206E65656473-
+    15 000000C4 2E0A00             
+    16 000000C7 0A506C656173652065-         prompt_for_name db 10, "Please enter your name: ", 0
+    16 000000D0 6E74657220796F7572-
+    16 000000D9 206E616D653A2000   
+    17 000000E1 0A506C656173652065-         prompt_for_sides db 10, "Please enter the lengths of three sides of a triangle: ", 0
+    17 000000EA 6E7465722074686520-
+    17 000000F3 6C656E67746873206F-
+    17 000000FC 662074687265652073-
+    17 00000105 69646573206F662061-
+    17 0000010E 20747269616E676C65-
+    17 00000117 3A2000             
+    18 0000011A 0A4572726F7220696E-         invalid_input db 10, "Error input try again", 10, 0
+    18 00000123 707574207472792061-
+    18 0000012C 6761696E0A00       
+    19 00000132 0A546865736520696E-         valid_triangle db 10, "These inputs have been tested and they are sides of a valid triangle.", 10, 0
+    19 0000013B 707574732068617665-
+    19 00000144 206265656E20746573-
+    19 0000014D 74656420616E642074-
+    19 00000156 686579206172652073-
+    19 0000015F 69646573206F662061-
+    19 00000168 2076616C6964207472-
+    19 00000171 69616E676C652E0A00 
+    20 0000017A 0A546865736520696E-         invalid_triangle db 10, "These inputs have been tested and they are not the sides of a valid triangle.", 10, 0
+    20 00000183 707574732068617665-
+    20 0000018C 206265656E20746573-
+    20 00000195 74656420616E642074-
+    20 0000019E 68657920617265206E-
+    20 000001A7 6F7420746865207369-
+    20 000001B0 646573206F66206120-
+    20 000001B9 76616C696420747269-
+    20 000001C2 616E676C652E0A00   
+    21 000001CA 0A546865204875726F-         huron_formula_msg db 10, "The Huron formula will be applied to find the area.", 10, 0
+    21 000001D3 6E20666F726D756C61-
+    21 000001DC 2077696C6C20626520-
+    21 000001E5 6170706C6965642074-
+    21 000001EE 6F2066696E64207468-
+    21 000001F7 6520617265612E0A00 
+    22 00000200 0A5468652061726561-         area_message db 10, "The area is %.4lf sq units. This number will be returned to the caller module.", 10, 0
+    22 00000209 20697320252E346C66-
+    22 00000212 20737120756E697473-
+    22 0000021B 2E2054686973206E75-
+    22 00000224 6D6265722077696C6C-
+    22 0000022D 206265207265747572-
+    22 00000236 6E656420746F207468-
+    22 0000023F 652063616C6C657220-
+    22 00000248 6D6F64756C652E0A00 
+    23 00000251 0A5468616E6B20796F-         thank_you db 10, "Thank you %s. Your patronage is appreciated.", 10, 0
+    23 0000025A 752025732E20596F75-
+    23 00000263 7220706174726F6E61-
+    23 0000026C 676520697320617070-
+    23 00000275 72656369617465642E-
+    23 0000027E 0A00               
+    24 00000280 0A41207A65726F2077-         zero_return_msg db 10, "A zero will not be returned to the operating system.", 10, 0
+    24 00000289 696C6C206E6F742062-
+    24 00000292 652072657475726E65-
+    24 0000029B 6420746F2074686520-
+    24 000002A4 6F7065726174696E67-
+    24 000002AD 2073797374656D2E0A-
+    24 000002B6 00                 
+    25 000002B7 257320257320257300          string_input db "%s %s %s", 0
+    26                                  section .bss
+    27                                      align 64
+    28 00000000 <res 00000340>              backup_storage_area resb 832
+    29 00000340 <res 00000040>              name resb 64
+    30 00000380 <res 00000008>              side1 resq 1
+    31 00000388 <res 00000008>              side2 resq 1
+    32 00000390 <res 00000008>              side3 resq 1
+    33 00000398 <res 00000100>              input_buffer resb 256
+    34 00000498 <res 00000008>              endptr resq 1
+    35                                  
+    36                                  section .text
+    37                                   
+    38                                  
+    39                                  manager:
+    40                                  
+    41 00000000 55                      push rbp
+    42 00000001 4889E5                  mov rbp, rsp
+    43 00000004 53                      push rbx
+    44 00000005 51                      push rcx
+    45 00000006 52                      push rdx
+    46 00000007 57                      push rdi
+    47 00000008 56                      push rsi
+    48 00000009 4150                    push r8
+    49 0000000B 4151                    push r9
+    50 0000000D 4152                    push r10
+    51 0000000F 4153                    push r11
+    52 00000011 4154                    push r12
+    53 00000013 4155                    push r13
+    54 00000015 4156                    push r14
+    55 00000017 4157                    push r15
+    56 00000019 9C                      pushf
+    57                                  ; Print welcome message
+    58 0000001A B800000000              mov rax, 0  ; Standard input is file descriptor 0
+    59 0000001F 48BF-                   mov rdi, welcome_msg
+    59 00000021 [7C00000000000000] 
+    60 00000029 E8(00000000)            call printf
+    61                                  
+    62                                      ; Prompt for name
+    63 0000002E B800000000                  mov rax, 0
+    64 00000033 48BF-                       mov rdi, prompt_for_name
+    64 00000035 [C700000000000000] 
+    65 0000003D E8(00000000)                call printf
+    66                                  
+    67 00000042 B800000000                  mov rax, 0
+    68 00000047 48BF-                       mov rdi, name
+    68 00000049 [4003000000000000] 
+    69 00000051 BE40000000                  mov rsi, 64
+    70 00000056 488B1425[00000000]          mov rdx, [stdin]
+    71 0000005E E8(00000000)                call fgets
+    72                                  
+    73                                      ; Remove newline character from name
+    74                                      ; mov rax, 0
+    75                                      ; mov rdi, name
+    76                                      ; call remove_newline
+    77                                  
+    78                                      ; Print author information
+    79 00000063 B800000000                  mov rax, 0
+    80 00000068 48BF-                       mov rdi, author_info
+    80 0000006A [0000000000000000] 
+    81 00000072 E8(00000000)                call printf
+    82                                  
+    83                                  input_loop:
+    84                                      ; Prompt for sides
+    85 00000077 B800000000                  mov rax, 0
+    86 0000007C 48BF-                       mov rdi, prompt_for_sides
+    86 0000007E [E100000000000000] 
+    87 00000086 E8(00000000)                call printf
+    88                                  
+    89                                  
+    90 0000008B B800000000                  mov rax, 0
+    91 00000090 48BF-                       mov rdi, string_input  ; Format string: "%s %s %s"
+    91 00000092 [B702000000000000] 
+    92 0000009A 48BE-                       mov rsi, side1          ; Address for first side
+    92 0000009C [8003000000000000] 
+    93 000000A4 48BA-                       mov rdx, side2          ; Address for second side
+    93 000000A6 [8803000000000000] 
+    94 000000AE 48B9-                       mov rcx,  side3          ; Address for third side (use R8 instead of RCX)
+    94 000000B0 [9003000000000000] 
+    95 000000B8 E8(00000000)                call scanf
+    96                                      
+    97                                  
+    98                                      
+    99                                      ; Parse the input string into three floating-point numbers
+   100                                  
+   101 000000BD 48BF-                       mov rdi, side1        
+   101 000000BF [8003000000000000] 
+   102 000000C7 E8(00000000)                call isfloat           
+   103 000000CC 4883F800                    cmp rax, 0             
+   104 000000D0 0F8487000000                je invalid_input_jmp       
+   105 000000D6 48BF-                       mov rdi, side1          
+   105 000000D8 [8003000000000000] 
+   106 000000E0 E8(00000000)                call atof              
+   107 000000E5 F2440F10E0                  movsd xmm12, xmm0      
+   108                                      
+   109                                      ; Validate and convert side2
+   110 000000EA 48BF-                       mov rdi, side2         
+   110 000000EC [8803000000000000] 
+   111 000000F4 E8(00000000)                call isfloat            
+   112 000000F9 4883F800                    cmp rax, 0             
+   113 000000FD 745E                        je invalid_input_jmp       
+   114 000000FF 48BF-                       mov rdi, side2          
+   114 00000101 [8803000000000000] 
+   115 00000109 E8(00000000)                call atof              
+   116 0000010E F2440F10E8                  movsd xmm13, xmm0       
+   117                                      
+   118                                      ; Validate and convert side3
+   119 00000113 48BF-                       mov rdi, side3        
+   119 00000115 [9003000000000000] 
+   120 0000011D E8(00000000)                call isfloat           
+   121 00000122 4883F800                    cmp rax, 0             
+   122 00000126 7435                        je invalid_input_jmp       
+   123 00000128 48BF-                       mov rdi, side3         
+   123 0000012A [9003000000000000] 
+   124 00000132 E8(00000000)                call atof              
+   125 00000137 F2440F10F0                  movsd xmm14, xmm0      
+   126                                      
+   127                                      
+   128                                      ; Call istriangle to validate the sides
+   129 0000013C B803000000                  mov rax, 3
+   130 00000141 F2410F10C4                  movsd xmm0, xmm12       ; Passing side1
+   131 00000146 F2410F10CD                  movsd xmm1, xmm13       ; Passing side2
+   132 0000014B F2410F10D6                  movsd xmm2, xmm14       ; Passing side3
+   133 00000150 E8(00000000)                call istriangle         ; Function using the three side args to check if the side make a vaild triangle
+   134 00000155 4883F801                    cmp rax, 1              ; If returned false will prompt invalid_msg
+   135 00000159 7502                        jne invalid_input_jmp       ; Jump to invalid_input block
+   136 0000015B EB19                        jmp next
+   137                                  
+   138                                  
+   139                                      ; If valid, compute area
+   140                                      invalid_input_jmp:
+   141 0000015D B800000000                  mov rax, 0
+   142 00000162 48BF-                       mov rdi, invalid_input          ; Display invalid_msg and prompt for re-input
+   142 00000164 [1A01000000000000] 
+   143 0000016C E8(00000000)                call printf
+   144 00000171 E901FFFFFF                  jmp input_loop
+   145                                  
+   146                                          ; Print thank you message
+   147                                      next:
+   148 00000176 B800000000                  mov rax, 0
+   149 0000017B 48BF-                       mov rdi, thank_you
+   149 0000017D [5102000000000000] 
+   150 00000185 48BE-                       mov rsi, name
+   150 00000187 [4003000000000000] 
+   151 0000018F E8(00000000)                call printf
+   152                                  
+   153                                      
+   154                                      ; Print valid triangle message
+   155 00000194 B800000000                  mov rax, 0
+   156 00000199 48BF-                       mov rdi, valid_triangle
+   156 0000019B [3201000000000000] 
+   157 000001A3 E8(00000000)                call printf
+   158                                  
+   159                                  
+   160                                      
+   161                                      ; Print Huron formula message
+   162 000001A8 B800000000                  mov rax, 0
+   163 000001AD 48BF-                       mov rdi, huron_formula_msg
+   163 000001AF [CA01000000000000] 
+   164 000001B7 E8(00000000)                call printf
+   165                                  
+   166 000001BC F2410F10C4                  movsd xmm0, xmm12       ; Passing side1
+   167 000001C1 F2410F10CD                  movsd xmm1, xmm13       ; Passing side2
+   168 000001C6 F2410F10D6                  movsd xmm2, xmm14       ; Passing side3
+   169 000001CB E8(00000000)                call huron              ; Function using Heron's formula to calculate for triangle's area with the three sides
+   170 000001D0 F2440F10F8                  movsd xmm15, xmm0       ; Saving area into non-violatile register
+   171                                  
+   172                                  
+   173                                      ; Print area
+   174 000001D5 B800000000                  mov rax, 0
+   175 000001DA 48BF-                       mov rdi, area_message
+   175 000001DC [0002000000000000] 
+   176 000001E4 F2410F10C7                  movsd xmm0, xmm15
+   177 000001E9 E8(00000000)                call printf
+   178                                  
+   179                                  
+   180                                  
+   181                                      ; Print zero return message
+   182 000001EE B800000000                  mov rax, 0
+   183 000001F3 48BF-                       mov rdi, zero_return_msg
+   183 000001F5 [8002000000000000] 
+   184 000001FD E8(00000000)                call printf
+   185                                  
+   186                                      ; Restore the stack
+   187 00000202 4883C420                    add rsp, 32
+   188                                  
+   189                                      ; Restore extended state
+   190 00000206 B807000000                  mov rax, 7
+   191 0000020B BA00000000                  mov rdx, 0
+   192 00000210 0FAE2C25[00000000]          xrstor [backup_storage_area]
+   193                                  
+   194                                      ; Restore GPRs
+   195 00000218 9D                          popf
+   196 00000219 415F                        pop r15
+   197 0000021B 415E                        pop r14
+   198 0000021D 415D                        pop r13
+   199 0000021F 415C                        pop r12
+   200 00000221 415B                        pop r11
+   201 00000223 415A                        pop r10
+   202 00000225 4159                        pop r9
+   203 00000227 4158                        pop r8
+   204 00000229 5F                          pop rdi
+   205 0000022A 5E                          pop rsi
+   206 0000022B 5A                          pop rdx
+   207 0000022C 59                          pop rcx
+   208 0000022D 5B                          pop rbx
+   209 0000022E 5D                          pop rbp
+   210                                  
+   211                                      ; Return area
+   212 0000022F F20F100425-                 movsd xmm0, [side1]
+   212 00000234 [80030000]         
+   213 00000238 C3                          ret
+   214                                  
+   215                                  ; .invalid_input:
+   216                                  ;     ; Print invalid input message
+   217                                  ;     mov rdi, invalid_input
+   218                                  ;     call printf
+   219                                  ;     jmp input_loop
+   220                                  
+   221                                  ; invalid_triangle:
+   222                                  ;     ; Print invalid triangle message
+   223                                  ;     mov rdi, invalid_triangle
+   224                                  ;     call printf
+   225                                  
+   226                                  ;     ; Restore the stack
+   227                                  ;     add rsp, 32
+   228                                  
+   229                                  ;     ; Restore extended state
+   230                                  ;     mov rax, 7
+   231                                  ;     mov rdx, 0
+   232                                  ;     xrstor [backup_storage_area]
+   233                                  
+   234                                  ;     ; Restore GPRs
+   235                                  ;     popf
+   236                                  ;     pop r15
+   237                                  ;     pop r14
+   238                                  ;     pop r13
+   239                                  ;     pop r12
+   240                                  ;     pop r11
+   241                                  ;     pop r10
+   242                                  ;     pop r9
+   243                                  ;     pop r8
+   244                                  ;     pop rdi
+   245                                  ;     pop rsi
+   246                                  ;     pop rdx
+   247                                  ;     pop rcx
+   248                                  ;     pop rbx
+   249                                  ;     pop rbp
+   250                                  
+   251                                  ;     ; Return -1 to indicate error
+   252                                  ;     mov rax, -1
+   253                                  ;     ret
+   254                                  
+   255                                  ; remove_newline:
+   256                                  ;     ; Remove newline character from name
+   257                                  ;     mov rcx, 64
+   258                                  ; .remove_loop:
+   259                                  ;     cmp byte [rdi + rcx - 1], 10
+   260                                  ;     je .replace_null
+   261                                  ;     loop .remove_loop
+   262                                  ;     ret
+   263                                  ; .replace_null:
+   264                                  ;     mov byte [rdi + rcx - 1], 0
+   265                                  ;     ret
